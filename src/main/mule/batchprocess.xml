@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="17f79cdf-93fa-4d6f-8dbc-02fec2ba80d4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="batchprocessFlow" doc:id="e33b0b75-0b81-45ef-8dfd-b7d1d5e9c69e" >
+		<http:listener doc:name="Listener" doc:id="07713593-1c79-45c0-85cd-3d3e41932fd4" config-ref="HTTP_Listener_config" path="/batch"/>
+		<file:read doc:name="Read" doc:id="c96c9c08-27e8-494b-b2a7-904b3a439841" path="C:\Users\Lenovo\Desktop\data.xlsx"/>
+		<ee:transform doc:name="Transform Message" doc:id="ea0376bd-21ed-4655-991f-5f3edb40445c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="888bd8e4-6a0c-465d-82fa-5c6b34794c3e" message="#[payload]"/>
+		<batch:job jobName="batchprocessBatch_Job" doc:id="0e975da9-ac01-42f8-b9df-70b1a7d30918" >
+			<batch:process-records >
+				<batch:step name="Batch_Step1" doc:id="b5be2520-2885-4214-92df-924f1a30fc48" acceptPolicy="ALL">
+					<logger level="INFO" doc:name="Logger" doc:id="b33a858f-a18d-47e3-abb8-475293968db1" message="#[payload]"/>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="f62092b0-d3fe-49dc-92f3-e81cc5d49877" size="2">
+						<ee:transform doc:name="Transform Message" doc:id="0fa3098e-ec44-4f61-9f3d-cbeff1e8581a" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<logger level="INFO" doc:name="Logger" doc:id="545d6d5d-32ad-41da-b68e-dba31f85d56b" message="#[payload]"/>
+						<file:write doc:name="Write" doc:id="02693559-e86e-41e9-bf98-32c7b610d6eb" path="C:\Users\Lenovo\Desktop\mulesoft\thriveni.csv"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="3bfc0c37-9566-444e-83e8-f14e6ee12c4a" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
